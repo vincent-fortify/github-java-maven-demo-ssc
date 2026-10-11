@@ -1,0 +1,61 @@
+name: Fortify Security Scan (SSC)
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_dast:
+        description: 'Also run ScanCentral DAST scan'
+        type: boolean
+        default: false
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  schedule:
+    - cron: '30 1 * * 6'
+
+permissions:
+  contents: read
+
+jobs:
+  Fortify-SSC:
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+      pull-requests: write
+    steps:
+      - name: Check out source code
+        uses: actions/checkout@v6
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Run Fortify SSC / ScanCentral Scan
+        uses: fortify/github-action@v3
+        env:
+          # Connection
+          SSC_URL: https://ssc.vincentdeng.net        # root context, no /ssc
+          SSC_TOKEN: ${{ secrets.SSC_TOKEN }}          # CIToken
+          SC_SAST_TOKEN: ${{ secrets.SC_SAST_TOKEN }}  # controller client_auth_token
+          # App version (default <org>/<repo>:<branch>)
+          SSC_APPVERSION: ${{ github.repository }}:${{ github.head_ref || github.ref_name }}
+          # SETUP_EXTRA_OPTS: --copy-from "IWA-Java-Demo:main"   # enable once main exists
+          # SAST
+          PACKAGE_EXTRA_OPTS: "-bt mvn -bf pom.xml"
+          # SCA (Debricked: runs automatically when token is present)
+          # DEBRICKED_ACCESS_TOKEN: ${{ secrets.DEBRICKED_ACCESS_TOKEN }}
+          # Aviator (audits automatically when URL + token are present)
+          # AVIATOR_URL: ${{ vars.AVIATOR_URL }}
+          # AVIATOR_TOKEN: ${{ secrets.AVIATOR_TOKEN }}
+          # # DAST (on demand only)
+          # DAST_SETTINGS: ${{ vars.DAST_SETTINGS }}     # SC-DAST settings CI/CD token
+          # DO_DAST_SCAN: ${{ inputs.run_dast || false }}
+          # Post-scan
+          DO_CHECK_POLICY: true
+          DO_PR_COMMENT: ${{ github.event_name == 'pull_request' }}
+          FCLI_BOOTSTRAP_VERSION: v3.28

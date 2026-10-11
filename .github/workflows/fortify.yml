@@ -44,7 +44,7 @@ jobs:
           SC_SAST_TOKEN: ${{ secrets.SC_SAST_TOKEN }}  # controller client_auth_token
           # App version (default <org>/<repo>:<branch>)
           SSC_APPVERSION: ${{ github.repository }}:${{ github.head_ref || github.ref_name }}
-          # SETUP_EXTRA_OPTS: --copy-from "IWA-Java-Demo:main"   # enable once main exists
+          SETUP_EXTRA_OPTS: --copy-from "${{ github.repository }}:main"
           # SAST
           PACKAGE_EXTRA_OPTS: "-bt mvn -bf pom.xml"
           # SCA (Debricked: runs automatically when token is present)

@@ -1,6 +1,8 @@
 package com.veracode.verademo.controller;
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.nio.file.Files;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
@@ -15,6 +17,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 @Controller
 @Scope("request")
@@ -44,6 +47,20 @@ public class ToolsController {
 		model.addAttribute("fortunes", fortune(fortuneFile));
 
 		return "tools";
+	}
+
+	@RequestMapping(value = "/tools/viewlog", method = RequestMethod.GET)
+	@ResponseBody
+	public String viewLog(@RequestParam(value = "file") String file)
+	{
+		try {
+			File logFile = new File(context.getRealPath("/WEB-INF/logs"), file);
+			return "<pre>" + new String(Files.readAllBytes(logFile.toPath())) + "</pre>";
+		}
+		catch (IOException ex) {
+			logger.error(ex);
+			return "Unable to read log file: " + file;
+		}
 	}
 
 	private String ping(String host)
